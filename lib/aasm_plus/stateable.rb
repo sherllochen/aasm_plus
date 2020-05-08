@@ -62,11 +62,10 @@ module AasmPlus
         state_column = self.class.aasm.attribute_name
         from_state = self.aasm_read_state
         self.update!(state_column => to_state)
-        self.state_chains.create!(user_id: operator.id, from: from_state, to: to_state,
-                                  event: 'manual_update_state!', assign_time: Time.zone.now)
+        send :create_state_chain!, {user_id: operator.id, from: from_state, to: to_state,
+                                    event: 'manual_update_state!', assign_time: Time.zone.now}
       end
     end
-
 
     private
 
@@ -83,8 +82,8 @@ module AasmPlus
         event = aasm.current_event
         assign_time = aasm_args[:assign_time]
         assign_time = nil if assign_time.blank?
-        self.state_chains.create!(user_id: self.operator.id, from: aasm.from_state, to: aasm.to_state,
-                                  event: event, assign_time: assign_time)
+        create_state_chain!({user_id: operator.id, from: aasm.from_state, to: aasm.to_state,
+                             event: event, assign_time: assign_time})
         puts "changing from #{aasm.from_state} to #{aasm.to_state} (event: #{aasm.current_event})"
       rescue => e
         raise '状态变更记录创建失败，回退状态变更'
@@ -92,6 +91,12 @@ module AasmPlus
     end
 
     def after_state_changed
+    end
+
+    def create_state_chain!(args)
+      self.state_chains.create!(user_id: args[:user_id], from: args[:from], to: args[:to],
+                                event: args[:event], assign_time: args[:assign_time],
+                                stateable_type: self.class.name, stateable_type: self.id)
     end
   end
 end

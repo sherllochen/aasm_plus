@@ -56,6 +56,12 @@ module AasmPlus
 
     it "log state change" do
       expect {o1.go!(user)}.to change {o1.state_chains.count}.from(0).to(1)
+      expect(o1.state_chains.last.stateable_type).to eq 'Order'
+      expect(o1.state_chains.last.stateable_id).to eq o1.id
+      expect(o1.state_chains.last.user_id).to eq user.id
+      expect(o1.state_chains.last.from).to eq 'first'
+      expect(o1.state_chains.last.to).to eq 'second'
+      expect(o1.state_chains.last.event).to eq 'go!'
     end
 
     describe '.manual_update_state' do
@@ -64,6 +70,8 @@ module AasmPlus
       end
       it 'log state change' do
         expect {o1.manual_update_state!('second', user)}.to change {o1.state_chains.count}.from(0).to(1)
+        expect(o1.state_chains.last.stateable_type).to eq 'Order'
+        expect(o1.state_chains.last.stateable_id).to eq o1.id
         expect(o1.state_chains.last.user_id).to eq user.id
         expect(o1.state_chains.last.from).to eq 'first'
         expect(o1.state_chains.last.to).to eq 'second'
